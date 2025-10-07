@@ -2,52 +2,48 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Subject;
-use App\Models\Teacher;
 use Illuminate\Http\Request;
+use Faker\Factory as Faker;
 
 class SubjectController extends Controller
 {
     public function index()
     {
-        $subjects = Subject::with('teachers')->get();
+        $faker = Faker::create('id_ID');
 
-        if ($subjects->isEmpty()) {
-            $names = [
-                'Matematika',
-                'Bahasa Indonesia',
-                'Bahasa Inggris',
-                'Ilmu Pengetahuan Alam',
-                'Sejarah',
-            ];
+        $subjectNames = [
+            'Matematika',
+            'Bahasa Indonesia',
+            'Bahasa Inggris',
+            'Ilmu Pengetahuan Alam',
+            'Sejarah',
+        ];
 
-            $teacherNames = [
-                'Siti Aminah',
-                'Budi Santoso',
-                'Andi Wijaya',
-                'Rina Putri',
-                'Agus Salim',
-            ];
+        $subjects = collect();
 
-            $subjects = collect();
+        // Hanya 5 data pelajaran
+        for ($i = 1; $i <= 5; $i++) {
+            $teachers = collect();
 
-            foreach ($names as $i => $name) {
-                $s = new Subject(['name' => $name, 'description' => "Mata pelajaran $name"]);
-                $s->id = $i + 1;
-
-                $t = new Teacher([
-                    'name' => $teacherNames[$i] ?? "Guru $i",
-                    'phone' => '0812' . str_pad((string)($i + 1000), 8, '0', STR_PAD_LEFT),
-                    'email' => strtolower(str_replace(' ', '.', $teacherNames[$i] ?? "guru$i")) . '@example.test',
-                    'address' => 'Jl. Contoh No. ' . ($i + 1),
-                    'subject_id' => $s->id,
+            // Setiap pelajaran punya 1–2 guru dummy
+            for ($j = 1; $j <= rand(1, 2); $j++) {
+                $teachers->push((object) [
+                    'id' => ($i * 10) + $j,
+                    'name' => $faker->name(),
+                    'phone' => $faker->phoneNumber(),
+                    'email' => $faker->unique()->safeEmail(),
+                    'address' => $faker->address(),
                 ]);
-                $t->id = $i + 1;
-
-                $s->setRelation('teachers', collect([$t]));
-
-                $subjects->push($s);
             }
+
+            $subject = (object) [
+                'id' => $i,
+                'name' => $subjectNames[$i - 1] ?? $faker->word(),
+                'description' => "Mata pelajaran " . ($subjectNames[$i - 1] ?? 'Tambahan'),
+                'teachers' => $teachers,
+            ];
+
+            $subjects->push($subject);
         }
 
         return view('subjects.index', compact('subjects'));

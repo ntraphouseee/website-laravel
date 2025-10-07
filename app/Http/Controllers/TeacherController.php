@@ -2,53 +2,45 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Teacher;
-use App\Models\Subject;
+use Faker\Factory as Faker;
 
 class TeacherController extends Controller
 {
     public function index()
     {
-        $teachers = Teacher::with('subject')->get();
+        $faker = Faker::create('id_ID');
 
-        if ($teachers->isEmpty()) {
-            $subjectNames = [
-                'Matematika',
-                'Bahasa Indonesia',
-                'Bahasa Inggris',
-                'Ilmu Pengetahuan Alam',
-                'Sejarah',
+        $subjectNames = [
+            'Matematika',
+            'Bahasa Indonesia',
+            'Bahasa Inggris',
+            'Ilmu Pengetahuan Alam',
+            'Sejarah',
+        ];
+
+        $teachers = collect();
+
+        // Hanya 5 data guru
+        for ($i = 1; $i <= 5; $i++) {
+            $subject = (object) [
+                'id' => $i,
+                'name' => $subjectNames[$i - 1] ?? $faker->word(),
+                'description' => "Mata pelajaran " . ($subjectNames[$i - 1] ?? 'Tambahan'),
             ];
 
-            $teacherNames = [
-                'Siti Aminah',
-                'Budi Santoso',
-                'Andi Wijaya',
-                'Rina Putri',
-                'Agus Salim',
+            $teacher = (object) [
+                'id' => $i,
+                'name' => $faker->name(),
+                'phone' => $faker->phoneNumber(),
+                'email' => $faker->unique()->safeEmail(),
+                'address' => $faker->address(),
+                'subject' => $subject,
             ];
 
-            $teachers = collect();
-            foreach ($teacherNames as $i => $name) {
-                $sub = new Subject(['name' => $subjectNames[$i] ?? 'Umum']);
-                $sub->id = $i + 1;
-
-                $t = new Teacher([
-                    'name' => $name,
-                    'phone' => '0812' . str_pad((string)($i + 1000), 8, '0', STR_PAD_LEFT),
-                    'email' => strtolower(str_replace(' ', '.', $name)) . '@example.test',
-                    'address' => 'Jl. Ahmad Raya ' . ($i + 1),
-                    'subject_id' => $sub->id,
-                ]);
-                $t->id = $i + 1;
-                $t->setRelation('subject', $sub);
-
-                $teachers->push($t);
-            }
+            $teachers->push($teacher);
         }
 
         return view('teachers.index', compact('teachers'));
-    }                                                                                                               
+    }
 }
